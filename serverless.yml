@@ -1,0 +1,49 @@
+service: funcionario-serveless-dynamo
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: go1.x
+  stage: dev
+  region: us-east-1
+  iam:
+    role:
+      statements:
+       -  Effect: Allow
+          Action:
+            -   dynamodb: PutItem
+          Resource: 
+            -   ""
+
+
+
+package:
+  patterns:
+    - '!./**'
+    - ./bin/**
+
+functions:
+  insert:
+    handler: bin/InsertProduct
+    events:
+      - httpApi:
+          path: /funcionarios
+          method: post
+  
+
+resources:
+  Resources:
+    VideoTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: Funcionarios
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KetType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1

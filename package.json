@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "serveless": "^0.0.2"
+  },
+  "name": "funcionario"
+}
