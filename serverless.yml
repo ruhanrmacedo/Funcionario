@@ -1,5 +1,6 @@
 service: funcionario-serveless-dynamo
 
+
 frameworkVersion: '3'
 
 provider:
@@ -12,9 +13,10 @@ provider:
       statements:
        -  Effect: Allow
           Action:
-            -   dynamodb: PutItem
+            -   dynamodb:PutItem
+            -   dynamodb:Scan
           Resource: 
-            -   ""
+            -   "arn:aws:dynamodb:${aws:region}:${accountId}:table/Funcionarios"
 
 
 
@@ -28,13 +30,19 @@ functions:
     handler: bin/InsertProduct
     events:
       - httpApi:
-          path: /funcionarios
+          path: /funcionario
           method: post
   
+  list:
+    handler: bin/ListProducts
+    events:
+      - httpApi:
+          path: /funcionario
+          method: get
 
 resources:
   Resources:
-    VideoTable:
+    FuncionariosTable:
       Type: AWS::DynamoDB::Table
       Properties:
         TableName: Funcionarios
@@ -43,7 +51,7 @@ resources:
             AttributeType: S
         KeySchema:
           - AttributeName: id
-            KetType: HASH
+            KeyType: HASH
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1

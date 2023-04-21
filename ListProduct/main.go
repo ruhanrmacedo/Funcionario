@@ -10,7 +10,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/google/uuid"
 )
 
 type Funcionario struct {
@@ -19,53 +18,48 @@ type Funcionario struct {
 	CPF  int    `json:"cpf"`
 }
 
-func InsertProduct(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	var funcionario Funcionario
-	err := json.Unmarshal([]byte(request.Body), &funcionario)
-	if err != nil {
-		return events.APIGatewayProxyResponse{Body: err.Error(), StatusCode: 500}, nil
-	}
-
-	funcionario.ID = uuid.New().String()
-
+func ListProduct(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	sess := session.Must(session.NewSession())
 	svc := dynamodb.New(sess)
 
-	input := &dynamodb.PutItemInput{
+	input := &dynamodb.ScanInput{
 		TableName: aws.String("Funcionarios"),
-		Item: map[string]*dynamodb.AttributeValue{
-			"id": {
-				S: aws.String(funcionario.ID),
-			},
-			"name": {
-				S: aws.String(funcionario.Name),
-			},
-			"cpf": {
-				N: aws.String(strconv.Itoa(funcionario.CPF)),
-			},
-		},
 	}
 
-	_, err = svc.PutItem(input)
+	result, err := svc.Scan(input)
 	if err != nil {
 		return events.APIGatewayProxyResponse{Body: err.Error(), StatusCode: 500}, nil
+	}
+
+	var funcionario []Funcionario
+	for _, item := range result.Items {
+		cpf, err := strconv.Atoi(*item["cpf"].N)
+		if err != nil {
+			return events.APIGatewayProxyResponse{Body: err.Error(), StatusCode: 500}, nil
+		}
+
+		funcionario = append(funcionario, Funcionario{
+			ID:   *item["id"].S,
+			Name: *item["name"].S,
+			CPF:  cpf,
+		})
 	}
 
 	body, err := json.Marshal(funcionario)
 	if err != nil {
 		return events.APIGatewayProxyResponse{Body: err.Error(), StatusCode: 500}, nil
+
 	}
 
 	return events.APIGatewayProxyResponse{
-		StatusCode: 201,
+		StatusCode: 200,
 		Headers: map[string]string{
 			"Content-Type": "application/json",
 		},
 		Body: string(body),
 	}, nil
-
 }
 
 func main() {
-	lambda.Start(InsertProduct)
+	lambda.Start(ListProduct)
 }

@@ -1,0 +1,10 @@
+POST url HTTP 1.1
+Content-Type: application/json
+
+{
+    "name": "Ruhan",
+    "cpf": 00011122220
+}
+
+####
+GET url HTTP 1.1
